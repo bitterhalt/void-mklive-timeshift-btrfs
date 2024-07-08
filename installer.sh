@@ -1061,6 +1061,7 @@ as FAT32, mountpoint /boot/efi and at least with 100MB of size." ${MSGBOXSIZE}
     FILESYSTEMS_DONE=1
 }
 
+
 create_filesystems() {
     local mnts dev mntpt fstype fspassno mkfs size rv uuid mntopts
 
@@ -1159,7 +1160,7 @@ failed to remount $dev on ${mntpt}! check $LOG for errors." ${MSGBOXSIZE}
         fi
                mntopts=defaults
         if [ "$fstype" = "btrfs" ]; then
-            mntopts="$mntopts,defaults,noatime,compress=zstd"
+            mntopts="$mntopts,noatime,compress=zstd"
                         echo "UUID=$uuid / $fstype $mntopts,subvol=@       0 $fspassno" >>$TARGET_FSTAB
             echo "UUID=$uuid /var/cache $fstype $mntopts,subvol=@cache  0 $fspassno" >>$TARGET_FSTAB
             echo "UUID=$uuid /var/log $fstype $mntopts,subvol=@log    0 $fspassno" >>$TARGET_FSTAB
@@ -1192,8 +1193,15 @@ failed to mount $dev on $mntpt! check $LOG for errors." ${MSGBOXSIZE}
         else
             fspassno=2
         fi
+        # Add entry to target fstab
+        if [ "$mntpt" = "/boot" ] || [ "$mntpt" = "/boot/efi" ]; then
+            echo "UUID=$uuid $mntpt vfat defaults 0 $fspassno" >>$TARGET_FSTAB
+        else
+            echo "UUID=$uuid $mntpt $fstype $mntopts 0 $fspassno" >>$TARGET_FSTAB
+        fi
     done
 }
+
 
 mount_filesystems() {
     for f in sys proc dev; do
